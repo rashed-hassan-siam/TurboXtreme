@@ -51,4 +51,15 @@ public class Car : MonoBehaviour {
             ApplyLocalPositionToVisuals(axleInfo.rightWheel);
         }
     }
+
+	public void Update()
+    {
+        Rigidbody rb = GetComponent<Rigidbody> ();
+	if(Input.GetKey(KeyCode.Space)){
+		rb.drag = 1;
+	}
+	else{
+		rb.drag = 0;
+	}
+    }
 }
