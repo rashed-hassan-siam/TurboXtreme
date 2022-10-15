@@ -1,67 +1,54 @@
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
-public class Car : MonoBehaviour
-{
-    [System.Serializable]
-    public class AxleInfo
+[System.Serializable]
+public class AxleInfo {
+    public WheelCollider leftWheel;
+    public WheelCollider rightWheel;
+    public bool motor;
+    public bool steering;
+}
+     
+public class Car : MonoBehaviour {
+    public List<AxleInfo> axleInfos; 
+    public float maxMotorTorque;
+    public float maxSteeringAngle;
+     
+    // finds the corresponding visual wheel
+    // correctly applies the transform
+    public void ApplyLocalPositionToVisuals(WheelCollider collider)
     {
-        public Transform visualLeft;
-        public Transform visualRight;
-        public WheelCollider colliderLeft;
-        public WheelCollider colliderRight;
-        public bool isMotor; //is this wheel attached to motor?
-        public bool isSteering; //does this wheel apply steer angle?
-    }
-
-    public List<AxleInfo> axleInfos;    //two wheels per axel
-    public float maxMotorTorque;        //maximum torque the motor can apply to wheel
-    public float maxSteeringAngle;      //maximum steer angle the wheel can have
-    public float maxBrake;
-
-    private void FixedUpdate()
-    {
-        float brake = 0;
-        if (Input.GetButton("Fire1") == true) //joystick A
-        {
-            brake = maxBrake;
+        if (collider.transform.childCount == 0) {
+            return;
         }
-
+     
+        Transform visualWheel = collider.transform.GetChild(0);
+     
+        Vector3 position;
+        Quaternion rotation;
+        collider.GetWorldPose(out position, out rotation);
+     
+        visualWheel.transform.position = position;
+        visualWheel.transform.rotation = rotation;
+    }
+     
+    public void FixedUpdate()
+    {
         float motor = maxMotorTorque * Input.GetAxis("Vertical");
         float steering = maxSteeringAngle * Input.GetAxis("Horizontal");
-
-        foreach (AxleInfo inf in axleInfos)
-        {
-            if (inf.isMotor)
-            {
-                inf.colliderLeft.motorTorque = motor;
-                inf.colliderRight.motorTorque = motor;
+     
+        foreach (AxleInfo axleInfo in axleInfos) {
+            if (axleInfo.steering) {
+                axleInfo.leftWheel.steerAngle = steering;
+                axleInfo.rightWheel.steerAngle = steering;
             }
-            if (inf.isSteering)
-            {
-                inf.colliderLeft.steerAngle = steering;
-                inf.colliderRight.steerAngle = steering;
+            if (axleInfo.motor) {
+                axleInfo.leftWheel.motorTorque = motor;
+                axleInfo.rightWheel.motorTorque = motor;
             }
-            inf.colliderLeft.brakeTorque = brake;
-            inf.colliderRight.brakeTorque = brake;
-
-            ApplyLocalPositionToVisuals(inf);
+            ApplyLocalPositionToVisuals(axleInfo.leftWheel);
+            ApplyLocalPositionToVisuals(axleInfo.rightWheel);
         }
-    }
-    private void ApplyLocalPositionToVisuals(AxleInfo axle)
-    {
-        //apply wheelcollider position and rotation to visual wheels
-        Vector3 posL;
-        Quaternion rotL;
-        axle.colliderLeft.GetWorldPose(out posL, out rotL);
-        axle.visualLeft.transform.position = posL;
-        axle.visualLeft.transform.rotation = rotL;
-
-        Vector3 posR;
-        Quaternion rotR;
-        axle.colliderRight.GetWorldPose(out posR, out rotR);
-        axle.visualRight.transform.position = posR;
-        axle.visualRight.transform.rotation = rotR;
     }
 }
